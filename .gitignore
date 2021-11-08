@@ -133,3 +133,7 @@ dmypy.json
 
 # data folder
 data/
+
+# Weight folder
+weights/
+
