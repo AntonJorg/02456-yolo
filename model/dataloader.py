@@ -1,5 +1,6 @@
 import os
 import io
+import re
 import numpy as np
 import pandas as pd
 import torch
@@ -62,7 +63,27 @@ class HELMETDataLoader(DataLoader):
         return tuple(zip(*batch))
 
 
-
 def dict_from_bounding_box(bb):
     d = {"track_id": bb[0], "frame_id": bb[1], "dim": bb[2:6], "class": bb[6]}
     return d
+
+
+def pos_encoding_from_label(label):
+    pos_encoding = torch.zeros(10)
+
+    for i, sub in enumerate(label.split("P")):
+        if sub[0] == "D":
+            ind = 0
+        else:
+            ind = int(sub[0]) + 1
+
+        pos_encoding[ind] = 1
+        if sub[1:] == "Helmet":
+            pos_encoding[ind + 5] = 1
+
+    return pos_encoding
+
+
+if __name__ == "__main__":
+    label = "DHelmetP0NoHelmetP1HelmetP2NoHelmet"
+    print(pos_encoding_from_label(label))
