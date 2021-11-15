@@ -10,7 +10,7 @@ from torchvision import transforms
 
 
 class HELMETDataSet(Dataset):
-    def __init__(self, root_dir):
+    def __init__(self, root_dir, resize=True):
         # working directories
         self.root_dir = root_dir
         self.video_dir = os.path.join(root_dir, "image")
@@ -38,7 +38,11 @@ class HELMETDataSet(Dataset):
                         self.images_annotations.append(csv[csv[:, 1] == im_id])
                 prev_root = root
 
-        self.transform = transforms.Compose([transforms.ToTensor()])
+        transform_list = [transforms.ToTensor()]
+        if resize:
+            transform_list = [transforms.Resize((832, 832))] + transform_list
+
+        self.transform = transforms.Compose(transform_list)
 
     def __len__(self):
         return len(self.images_paths)
@@ -60,6 +64,7 @@ class HELMETDataLoader(DataLoader):
         super().__init__(dataset, shuffle=shuffle, batch_size=batch_size, collate_fn=self.custom_collate_fn)
 
     def custom_collate_fn(self, batch):
+        # change such that images are one tensor and not tuple of tensors
         return tuple(zip(*batch))
 
 
@@ -85,5 +90,13 @@ def pos_encoding_from_label(label):
 
 
 if __name__ == "__main__":
+    dataloader = HELMETDataLoader("../data/HELMET_DATASET")
+
+    batch = next(iter(dataloader))
+
+    imgs, annotations = batch
+
+    print(imgs[0].shape)
+
     label = "DHelmetP0NoHelmetP1HelmetP2NoHelmet"
     print(pos_encoding_from_label(label))
