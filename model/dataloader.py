@@ -38,8 +38,10 @@ class HELMETDataSet(Dataset):
                         self.images_annotations.append(csv[csv[:, 1] == im_id])
                 prev_root = root
 
+        self.resize = resize
+
         transform_list = [transforms.ToTensor()]
-        if resize:
+        if self.resize:
             transform_list = [transforms.Resize((832, 832))] + transform_list
 
         self.transform = transforms.Compose(transform_list)
@@ -53,19 +55,28 @@ class HELMETDataSet(Dataset):
 
         # target
         y = self.images_annotations[idx]
+
+        if self.resize:
+            y[:, 2:6] *= np.array([832/1920, 832/1080, 832/1920, 832/1080])
+            y[:, 2:6] = np.round(y[:, 2:6].astype(float))
+
         y = {i: row for i, row in enumerate(y)}
 
         return self.transform(x), y
 
 
 class HELMETDataLoader(DataLoader):
-    def __init__(self, root_dir, shuffle=True, batch_size=4):
-        dataset = HELMETDataSet(root_dir)
+    def __init__(self, root_dir, batch_size=4, shuffle=True, resize=True):
+        dataset = HELMETDataSet(root_dir, resize=resize)
         super().__init__(dataset, shuffle=shuffle, batch_size=batch_size, collate_fn=self.custom_collate_fn)
 
-    def custom_collate_fn(self, batch):
+    @staticmethod
+    def custom_collate_fn(batch):
         # change such that images are one tensor and not tuple of tensors
-        return tuple(zip(*batch))
+        imgs, annotations = tuple(zip(*batch))
+        imgs = [im.unsqueeze(0) for im in imgs]
+        imgs = torch.cat(imgs, 0)
+        return imgs, annotations
 
 
 def dict_from_bounding_box(bb):
@@ -96,7 +107,9 @@ if __name__ == "__main__":
 
     imgs, annotations = batch
 
-    print(imgs[0].shape)
+    print(imgs.shape)
+    print(annotations)
+    print(dataloader.dataset.images_annotations[:5])
 
     label = "DHelmetP0NoHelmetP1HelmetP2NoHelmet"
     print(pos_encoding_from_label(label))
