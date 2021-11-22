@@ -104,12 +104,9 @@ class HELMETDataSet(Dataset):
 
         if len(y) != 0:
             y = torch.cat(y, 0)
+            y *= np.array([1, 1 / 1920, 1 / 1080, 1 / 1920, 1 / 1080])
         else:
             y = torch.tensor(y)
-
-        if self.resize and len(y) != 0:
-            y *= np.array([1, 832/1920, 832/1080, 832/1920, 832/1080])
-            y = np.round(y)
 
         return self.transform(x), y, d
 
