@@ -249,6 +249,7 @@ class Darknet(nn.Module):
             metrics = torch.zeros(4, len(self.losses['FPe']))  # TP, FP, FN, target_count
 
             ui = np.unique(self.losses['TC'])[1:]
+            ui = ui.astype(int) # Maybe fix???????????????? Yes, it fix :^)
             for i in ui:
                 j = self.losses['TC'] == float(i)
                 metrics[0, i] = (self.losses['TP'][j] > 0).sum().float()  # TP
