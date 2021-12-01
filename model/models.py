@@ -153,7 +153,7 @@ class YOLOLayer(nn.Module):
             tx, ty, tw, th, mask, tcls, TP, FP, FN, TC = \
                 build_targets(pred_boxes, pred_conf, pred_cls, targets, self.scaled_anchors, self.nA, self.nC, nG,
                               requestPrecision)
-            tcls = tcls[mask]
+            tcls = tcls[mask.bool()]
             if x.is_cuda:
                 tx, ty, tw, th, mask, tcls = tx.cuda(), ty.cuda(), tw.cuda(), th.cuda(), mask.cuda(), tcls.cuda()
 
@@ -163,15 +163,15 @@ class YOLOLayer(nn.Module):
             nB = len(targets)  # batch size
             k = nM / nB
             if nM > 0:
-                lx = k * MSELoss(x[mask], tx[mask])
-                ly = k * MSELoss(y[mask], ty[mask])
-                lw = k * MSELoss(w[mask], tw[mask])
-                lh = k * MSELoss(h[mask], th[mask])
+                lx = k * MSELoss(x[mask.bool()], tx[mask.bool()])
+                ly = k * MSELoss(y[mask.bool()], ty[mask.bool()])
+                lw = k * MSELoss(w[mask.bool()], tw[mask.bool()])
+                lh = k * MSELoss(h[mask.bool()], th[mask.bool()])
 
                 # lconf = k * BCEWithLogitsLoss(pred_conf[mask], mask[mask].float())
                 lconf = k * BCEWithLogitsLoss(pred_conf, mask.float())
 
-                lcls = k * CrossEntropyLoss(pred_cls[mask], torch.argmax(tcls, 1))
+                lcls = k * CrossEntropyLoss(pred_cls[mask.bool()], torch.argmax(tcls, 1))
                 # lcls = k * BCEWithLogitsLoss(pred_cls[mask], tcls.float())
             else:
                 lx, ly, lw, lh, lcls, lconf = FT([0]), FT([0]), FT([0]), FT([0]), FT([0]), FT([0])
@@ -183,9 +183,9 @@ class YOLOLayer(nn.Module):
             loss = lx + ly + lw + lh + lconf + lcls
 
             # Sum False Positives from unassigned anchors
-            i = torch.sigmoid(pred_conf[~mask]) > 0.9
+            i = torch.sigmoid(pred_conf[~mask.bool()]) > 0.9
             if i.sum() > 0:
-                FP_classes = torch.argmax(pred_cls[~mask][i], 1)
+                FP_classes = torch.argmax(pred_cls[~mask.bool()][i], 1)
                 FPe = torch.bincount(FP_classes, minlength=self.nC).float().cpu()  # extra FPs
             else:
                 FPe = torch.zeros(self.nC)

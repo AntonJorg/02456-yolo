@@ -4,6 +4,7 @@ import os
 
 import time
 import torch
+import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,7 +14,7 @@ from model.dataloader import class_dict
 from model.models import Darknet, load_weights, load_darknet_weights
 from utils.utils import *
 
-from IPython.display import clear_output
+#from IPython.display import clear_output
 
 
 cfg_path = './cfg/yolov3.cfg'
@@ -39,7 +40,7 @@ load_darknet_weights(model, weights_path)
 
 batch_size = 3
 
-dataloader = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size)
+dataloader = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size)#"/work1/fbohy/Helmet/"
 
 
 CUTOFF = 155
@@ -59,7 +60,7 @@ optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters(
 # )
 
 
-cuda_enable = False
+cuda_enable = True
 cuda_available = torch.cuda.is_available()
 if cuda_enable and cuda_available:
     device = torch.device('cuda:0')
@@ -67,8 +68,8 @@ else:
     device = 'cpu'
 
 
-N_EPOCHS = 10
-PLOT_EVERY = 1000000
+N_EPOCHS = 1
+PLOT_EVERY = 1
 
 model.to(device)
 
@@ -78,41 +79,42 @@ plot_dict = {'train_loss': [], 'train_acc': [], 'Epoch': []}
 # targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
 
 for epoch in range(1, N_EPOCHS + 1):
-    since = time.time()
-    
-    imgs, targets, annotations = next(iter(dataloader))
-    targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
-    
-    # Train
-    model.train()
-    optimizer.zero_grad() # Zero gradients
-    loss = model(imgs.to(device), targets, requestPrecision=True)
-    loss.backward()
-    optimizer.step()
-    time_elapsed = time.time() - since  
-    print('Train Time {:.0f}m {:.0f}s'.format(
-        time_elapsed // 60, time_elapsed % 60))
-    
-    if not (epoch - 1) % PLOT_EVERY:
-        plot_dict['Epoch'].append(epoch)
-        plot_dict['train_loss'].append(loss.detach().numpy())
-        # plot_dict['train_acc'].append(1-trn_err)
-        fig, ax = plt.subplots(1, 1, figsize=(7.5, 5))
-        ax.plot(plot_dict['Epoch'], plot_dict['train_loss'])
-        ax.set_xlabel('Epochs')
-        ax.set_ylabel('Loss')
+	since = time.time()
+	
+	for imgs, targets, annotations in dataloader:
+	
+		targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
+
+		# Train
+		model.train()
+		optimizer.zero_grad() # Zero gradients
+		loss = model(imgs.to(device), targets, requestPrecision=True)
+		loss.backward()
+		optimizer.step()
+	time_elapsed = time.time() - since  
+	print('Train Time {:.0f}m {:.0f}s'.format(
+		time_elapsed // 60, time_elapsed % 60))
+
+	if not (epoch - 1) % PLOT_EVERY:
+		torch.save(model.state_dict(), "./trained_models/testTrained" + str(epoch) + ".pt")
+		plot_dict['Epoch'].append(epoch)
+		plot_dict['train_loss'].append(loss.cpu().detach().numpy())
+		# plot_dict['train_acc'].append(1-trn_err)
+        #fig, ax = plt.subplots(1, 1, figsize=(7.5, 5))
+        #ax.plot(plot_dict['Epoch'], plot_dict['train_loss'])
+        #ax.set_xlabel('Epochs')
+        #ax.set_ylabel('Loss')
         # axs[1].plot(plot_dict['Epoch'], plot_dict['train_acc'])
         # axs[1].set_xlabel('Epochs')
         # axs[1].set_ylabel('Accuracy')
-        plt.show()
-    clear_output(wait=True)
-
-
-torch.save(model.state_dict(), "./trained_models/testTrained.pt")
+        #plt.show()
 
 
 
 
+
+with open('loss.pickle', 'wb') as handle:
+    pickle.dump(plot_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 
