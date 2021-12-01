@@ -85,11 +85,17 @@ for epoch in range(1, N_EPOCHS + 1):
 	
 		targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
 
+        
 		# Train
 		model.train()
 		optimizer.zero_grad() # Zero gradients
 		loss = model(imgs.to(device), targets, requestPrecision=True)
-		loss.backward()
+		try: 
+            loss.backward()
+        except:
+            with open('errorImgs.pickle', 'wb') as handle:
+                pickle.dump(imgs, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 		optimizer.step()
 	time_elapsed = time.time() - since  
 	print('Train Time {:.0f}m {:.0f}s'.format(
