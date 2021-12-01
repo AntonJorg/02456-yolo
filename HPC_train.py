@@ -79,33 +79,33 @@ plot_dict = {'train_loss': [], 'train_acc': [], 'Epoch': []}
 # targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
 
 for epoch in range(1, N_EPOCHS + 1):
-	since = time.time()
-	
-	for imgs, targets, annotations in dataloader:
-	
-		targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
+    since = time.time()
+    
+    for imgs, targets, annotations in dataloader:
+    
+        targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
 
         
-		# Train
-		model.train()
-		optimizer.zero_grad() # Zero gradients
-		loss = model(imgs.to(device), targets, requestPrecision=True)
-		try: 
+        # Train
+        model.train()
+        optimizer.zero_grad() # Zero gradients
+        loss = model(imgs.to(device), targets, requestPrecision=True)
+        try:
             loss.backward()
         except:
             with open('errorImgs.pickle', 'wb') as handle:
                 pickle.dump(imgs, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-		optimizer.step()
-	time_elapsed = time.time() - since  
-	print('Train Time {:.0f}m {:.0f}s'.format(
-		time_elapsed // 60, time_elapsed % 60))
+        optimizer.step()
+    time_elapsed = time.time() - since  
+    print('Train Time {:.0f}m {:.0f}s'.format(
+        time_elapsed // 60, time_elapsed % 60))
 
-	if not (epoch - 1) % PLOT_EVERY:
-		torch.save(model.state_dict(), "./trained_models/testTrained" + str(epoch) + ".pt")
-		plot_dict['Epoch'].append(epoch)
-		plot_dict['train_loss'].append(loss.cpu().detach().numpy())
-		# plot_dict['train_acc'].append(1-trn_err)
+    if not (epoch - 1) % PLOT_EVERY:
+        torch.save(model.state_dict(), "./trained_models/testTrained" + str(epoch) + ".pt")
+        plot_dict['Epoch'].append(epoch)
+        plot_dict['train_loss'].append(loss.cpu().detach().numpy())
+        # plot_dict['train_acc'].append(1-trn_err)
         #fig, ax = plt.subplots(1, 1, figsize=(7.5, 5))
         #ax.plot(plot_dict['Epoch'], plot_dict['train_loss'])
         #ax.set_xlabel('Epochs')
