@@ -50,11 +50,18 @@ class_dict = {
 
 
 class HELMETDataSet(Dataset):
-    def __init__(self, root_dir, resize=None):
+    def __init__(self, root_dir, resize=None, split=None):
         # working directories
         self.root_dir = root_dir
-        self.video_dir = os.path.join(root_dir, "images")
+        self.video_dir = os.path.join(root_dir, "image")
         self.annotation_dir = os.path.join(root_dir, "annotation")
+
+        if split is None:
+            self.included_videos = None
+        else:
+            assert split in ["test", "training", "validation"], "Wrong split type!"
+            csv = pd.read_csv(os.path.join(self.root_dir, "data_split.csv"))
+            self.included_videos = list(csv["video_id"][csv["Set"] == split])
 
         # image paths and their corresponding video + frame ID
         self.images_paths = []
@@ -62,12 +69,15 @@ class HELMETDataSet(Dataset):
         self.images_id = []
         self.images_annotations = []
         prev_root = ""
+        vid_name = ""
         for root, dirs, files in os.walk(self.video_dir):
             if not dirs:
                 if prev_root != root:
                     vid_name = os.path.split(root)[-1]
                     csv = pd.read_csv(os.path.join(self.annotation_dir, vid_name + ".csv"))
                     csv = np.array(csv)
+                if split is not None and vid_name not in self.included_videos:
+                    continue
                 for file in files:
                     if file.endswith(".jpg"):  # avoid .DSStore
                         self.images_paths.append(os.path.join(root, file))
@@ -112,8 +122,8 @@ class HELMETDataSet(Dataset):
 
 
 class HELMETDataLoader(DataLoader):
-    def __init__(self, root_dir, batch_size=4, shuffle=True, resize=None):
-        dataset = HELMETDataSet(root_dir, resize=resize)
+    def __init__(self, root_dir, batch_size=4, shuffle=True, resize=None, split=None):
+        dataset = HELMETDataSet(root_dir, resize=resize, split=split)
         super().__init__(dataset, shuffle=shuffle, batch_size=batch_size, collate_fn=self.custom_collate_fn)
 
     @staticmethod
@@ -149,7 +159,7 @@ def pos_encoding_from_label(label):
 
 
 if __name__ == "__main__":
-    dataloader = HELMETDataLoader("../data/HELMET_DATASET", resize=True)
+    dataloader = HELMETDataLoader("../data/HELMET_DATASET", resize=True, split="validation")
 
     batch = next(iter(dataloader))
 
