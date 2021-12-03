@@ -53,7 +53,7 @@ class HELMETDataSet(Dataset):
     def __init__(self, root_dir, resize=None, split=None):
         # working directories
         self.root_dir = root_dir
-        self.video_dir = os.path.join(root_dir, "image")
+        self.video_dir = os.path.join(root_dir, "images")
         self.annotation_dir = os.path.join(root_dir, "annotation")
 
         if split is None:
