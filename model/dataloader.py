@@ -50,7 +50,7 @@ class_dict = {
 
 
 class HELMETDataSet(Dataset):
-    def __init__(self, root_dir, resize=True):
+    def __init__(self, root_dir, resize=None):
         # working directories
         self.root_dir = root_dir
         self.video_dir = os.path.join(root_dir, "images")
@@ -81,8 +81,8 @@ class HELMETDataSet(Dataset):
         self.resize = resize
 
         transform_list = [transforms.ToTensor()]
-        if self.resize:
-            transform_list = [transforms.Resize((832, 832))] + transform_list
+        if self.resize is not None:
+            transform_list = [transforms.Resize(self.resize)] + transform_list
 
         self.transform = transforms.Compose(transform_list)
 
@@ -112,7 +112,7 @@ class HELMETDataSet(Dataset):
 
 
 class HELMETDataLoader(DataLoader):
-    def __init__(self, root_dir, batch_size=4, shuffle=True, resize=True):
+    def __init__(self, root_dir, batch_size=4, shuffle=True, resize=None):
         dataset = HELMETDataSet(root_dir, resize=resize)
         super().__init__(dataset, shuffle=shuffle, batch_size=batch_size, collate_fn=self.custom_collate_fn)
 
