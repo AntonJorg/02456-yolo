@@ -30,7 +30,7 @@ weights_path = './weights/darknet53.conv.74'
 def get_darknet(img_size, cfg=cfg_path):
     return Darknet(cfg, img_size)
 
-img_size = 832
+img_size = 416
 
 model = get_darknet(img_size=img_size)
 
@@ -40,7 +40,7 @@ load_darknet_weights(model, weights_path)
 
 batch_size = 3
 
-dataloader = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size)#"/work1/fbohy/Helmet/"
+dataloader = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size, resize=(img_size,img_size))#"/work1/fbohy/Helmet/"
 
 
 CUTOFF = 155
@@ -68,7 +68,7 @@ else:
     device = 'cpu'
 
 
-N_EPOCHS = 1
+N_EPOCHS = 10
 PLOT_EVERY = 1
 
 model.to(device)
@@ -77,7 +77,7 @@ plot_dict = {'train_loss': [], 'train_acc': [], 'Epoch': []}
 
 # imgs, targets, annotations = next(iter(dataloader))
 # targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
-
+error_count = 0
 for epoch in range(1, N_EPOCHS + 1):
     since = time.time()
     
@@ -93,8 +93,9 @@ for epoch in range(1, N_EPOCHS + 1):
         try:
             loss.backward()
         except:
-            with open('errorImgs.pickle', 'wb') as handle:
-                pickle.dump(imgs, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            error_count +=1
+            # with open('errorImgs' + str(error_count) + '.pickle', 'wb') as handle:
+                # pickle.dump(imgs, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         optimizer.step()
     time_elapsed = time.time() - since  
@@ -102,9 +103,13 @@ for epoch in range(1, N_EPOCHS + 1):
         time_elapsed // 60, time_elapsed % 60))
 
     if not (epoch - 1) % PLOT_EVERY:
-        torch.save(model.state_dict(), "./trained_models/testTrained" + str(epoch) + ".pt")
+        torch.save(model.state_dict(), "./trained_models/416" + "e" + str(epoch) + "L" +str(loss.cpu().detach().numpy())+ ".pt")
         plot_dict['Epoch'].append(epoch)
         plot_dict['train_loss'].append(loss.cpu().detach().numpy())
+        with open('loss.pickle', 'wb') as handle:
+            pickle.dump(plot_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
         # plot_dict['train_acc'].append(1-trn_err)
         #fig, ax = plt.subplots(1, 1, figsize=(7.5, 5))
         #ax.plot(plot_dict['Epoch'], plot_dict['train_loss'])
@@ -116,11 +121,6 @@ for epoch in range(1, N_EPOCHS + 1):
         #plt.show()
 
 
-
-
-
-with open('loss.pickle', 'wb') as handle:
-    pickle.dump(plot_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 
