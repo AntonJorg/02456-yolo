@@ -17,7 +17,7 @@ from utils.utils import *
 #from IPython.display import clear_output
 
 
-cfg_path = './cfg/yolov3.cfg'
+cfg_path = './cfg/yolov3_36.cfg'
 weights_path = './weights/darknet53.conv.74'
 
 
@@ -34,13 +34,22 @@ img_size = 416
 
 model = get_darknet(img_size=img_size)
 
+trained_weights_path = "./trained_models/416e3L49.798347.pt"
+checkpoint = torch.load(trained_weights_path, map_location='cpu')
+model.load_state_dict(checkpoint)
+model.train()
+
 # Load in weights
 load_darknet_weights(model, weights_path)
 
 
 batch_size = 3
 
-dataloader = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size, resize=(img_size,img_size))#"/work1/fbohy/Helmet/"
+dataloader_train  = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size, resize=(img_size,img_size), split = "training")#"/work1/fbohy/Helmet/"
+dataloader_val  = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size, resize=(img_size,img_size), split = "validation")
+dataloader_test  = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size, resize=(img_size,img_size), split = "testing")
+
+
 
 
 CUTOFF = 155
@@ -68,12 +77,12 @@ else:
     device = 'cpu'
 
 
-N_EPOCHS = 10
+N_EPOCHS = 1
 PLOT_EVERY = 1
 
 model.to(device)
 
-plot_dict = {'train_loss': [], 'train_acc': [], 'Epoch': []}
+plot_dict = {'train_loss': [], 'train_acc': [], 'Epoch': [], "val_loss": [], "test_loss": []}
 
 # imgs, targets, annotations = next(iter(dataloader))
 # targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
@@ -81,7 +90,7 @@ error_count = 0
 for epoch in range(1, N_EPOCHS + 1):
     since = time.time()
     
-    for imgs, targets, annotations in dataloader:
+    for imgs, targets, annotations in dataloader_train:
     
         targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
 
@@ -89,7 +98,7 @@ for epoch in range(1, N_EPOCHS + 1):
         # Train
         model.train()
         optimizer.zero_grad() # Zero gradients
-        loss = model(imgs.to(device), targets, requestPrecision=True)
+        loss = model(imgs.to(device), targets, requestPrecision=False)
         try:
             loss.backward()
         except:
@@ -101,6 +110,17 @@ for epoch in range(1, N_EPOCHS + 1):
     time_elapsed = time.time() - since  
     print('Train Time {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
+
+
+    
+            
+    for imgs, targets, annotations in dataloader_val:
+    
+        targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
+        model.eval()
+        loss = model(imgs.to(device), targets, requestPrecision=False)
+        plot_dict['val_loss'].append(loss.cpu().detach().numpy())
+
 
     if not (epoch - 1) % PLOT_EVERY:
         torch.save(model.state_dict(), "./trained_models/416" + "e" + str(epoch) + "L" +str(loss.cpu().detach().numpy())+ ".pt")
@@ -123,13 +143,22 @@ for epoch in range(1, N_EPOCHS + 1):
 
 
 
+    #plot_dict['test_loss'].append(loss.cpu().detach().numpy())
 
 
 
 
 
+# test_loss_stats = []
+# for imgs, targets, annotations in dataloader_test:
+
+#     targets = list(map(lambda x: x.type(torch.FloatTensor), targets)) # To correct type.
+#     model.eval()
+#     loss_dict = model(imgs.to(device), targets, requestPrecision=True).losses
+#     test_loss_stats.append(loss_dict)
 
 
-
+# with open('loss_stats.pickle', 'wb') as handle:
+#     pickle.dump(test_loss_stats, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
