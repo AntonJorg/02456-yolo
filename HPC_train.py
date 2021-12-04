@@ -47,7 +47,7 @@ batch_size = 3
 
 dataloader_train  = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size, resize=(img_size,img_size), split = "training")#"/work1/fbohy/Helmet/"
 dataloader_val  = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size, resize=(img_size,img_size), split = "validation")
-dataloader_test  = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size, resize=(img_size,img_size), split = "testing")
+dataloader_test  = HELMETDataLoader("./data/HELMET_DATASET_DUMMY", shuffle=True, batch_size=batch_size, resize=(img_size,img_size), split = "test")
 
 
 
@@ -123,7 +123,7 @@ for epoch in range(1, N_EPOCHS + 1):
 
 
     if not (epoch - 1) % PLOT_EVERY:
-        torch.save(model.state_dict(), "./trained_models/416" + "e" + str(epoch) + "L" +str(loss.cpu().detach().numpy())+ ".pt")
+        torch.save(model.state_dict(), "./trained_models/416" + "e" + str(epoch+3) +  ".pt")
         plot_dict['Epoch'].append(epoch)
         plot_dict['train_loss'].append(loss.cpu().detach().numpy())
         with open('loss.pickle', 'wb') as handle:
