@@ -50,45 +50,19 @@ class_dict = {
 
 
 class HELMETDataSet(Dataset):
-    def __init__(self, root_dir, resize=None, split=None):
+    def __init__(self, root_dir="", resize=None, split=None, filenames=None):
         # working directories
         self.root_dir = root_dir
         self.video_dir = os.path.join(root_dir, "images")
         self.annotation_dir = os.path.join(root_dir, "annotation")
+        self.resize = resize
+        self.split = split
 
-        if split is None:
-            self.included_videos = None
-        else:
-            assert split in ["test", "training", "validation"], "Wrong split type!"
-            csv = pd.read_csv("./data_split.csv")#os.path.join(self.root_dir, "data_split.csv"))
-            self.included_videos = list(csv["video_id"][csv["Set"] == split])
-
-        # image paths and their corresponding video + frame ID
         self.images_paths = []
         self.images_vid_names = []
         self.images_id = []
         self.images_annotations = []
-        prev_root = ""
-        vid_name = ""
-        for root, dirs, files in os.walk(self.video_dir):
-            if not dirs:
-                if prev_root != root:
-                    vid_name = os.path.split(root)[-1]
-                    csv = pd.read_csv(os.path.join(self.annotation_dir, vid_name + ".csv"))
-                    csv = np.array(csv)
-                if split is not None and vid_name not in self.included_videos:
-                    continue
-                for file in files:
-                    if file.endswith(".jpg"):  # avoid .DSStore
-                        self.images_paths.append(os.path.join(root, file))
-                        vid_name = os.path.split(root)[-1]
-                        self.images_vid_names.append(vid_name)
-                        im_id = int(file.split(".")[0])
-                        self.images_id.append(im_id)
-                        self.images_annotations.append(csv[csv[:, 1] == im_id])
-                prev_root = root
-
-        self.resize = resize
+        self.included_videos = []
 
         transform_list = [transforms.ToTensor()]
         if self.resize is not None:
@@ -96,12 +70,22 @@ class HELMETDataSet(Dataset):
 
         self.transform = transforms.Compose(transform_list)
 
+        if filenames is not None:
+            self.images_only = True
+            self.images_paths = filenames
+        else:
+            self.images_only = False
+            self.populate()
+
     def __len__(self):
         return len(self.images_paths)
 
     def __getitem__(self, idx):
         # input
         x = Image.open(self.images_paths[idx])
+
+        if self.images_only:
+            return self.transform(x)
 
         # target
         target = self.images_annotations[idx]
@@ -118,22 +102,60 @@ class HELMETDataSet(Dataset):
             y[:, 1:3] += y[:, 3:] / 2
         else:
             y = torch.tensor(y)
-        
+
         return self.transform(x), y, d
+
+    def populate(self):
+        if self.split is None:
+            self.included_videos = None
+        else:
+            assert self.split in ["test", "training", "validation"], "Wrong split type!"
+            csv = pd.read_csv("./data_split.csv")#os.path.join(self.root_dir, "data_split.csv"))
+            self.included_videos = list(csv["video_id"][csv["Set"] == self.split])
+
+        # image paths and their corresponding video + frame ID
+
+        prev_root = ""
+        vid_name = ""
+        for root, dirs, files in os.walk(self.video_dir):
+            if not dirs:
+                if prev_root != root:
+                    vid_name = os.path.split(root)[-1]
+                    csv = pd.read_csv(os.path.join(self.annotation_dir, vid_name + ".csv"))
+                    csv = np.array(csv)
+                if self.split is not None and vid_name not in self.included_videos:
+                    continue
+                for file in files:
+                    if file.endswith(".jpg"):  # avoid .DSStore
+                        self.images_paths.append(os.path.join(root, file))
+                        vid_name = os.path.split(root)[-1]
+                        self.images_vid_names.append(vid_name)
+                        im_id = int(file.split(".")[0])
+                        self.images_id.append(im_id)
+                        self.images_annotations.append(csv[csv[:, 1] == im_id])
+                prev_root = root
 
 
 class HELMETDataLoader(DataLoader):
-    def __init__(self, root_dir, batch_size=4, shuffle=True, resize=None, split=None):
-        dataset = HELMETDataSet(root_dir, resize=resize, split=split)
+    def __init__(self, root_dir="", batch_size=4, shuffle=True, resize=None, split=None, filenames=None):
+        dataset = HELMETDataSet(root_dir, resize=resize, split=split, filenames=filenames)
+        if filenames is not None:
+            batch_size = len(filenames)
         super().__init__(dataset, shuffle=shuffle, batch_size=batch_size, collate_fn=self.custom_collate_fn)
 
     @staticmethod
     def custom_collate_fn(batch):
+        if type(batch[0]) is not tuple:
+            imgs = [im.unsqueeze(0) for im in batch]
+            imgs = torch.cat(imgs, 0)
+            return imgs
+
         # change such that images are one tensor and not tuple of tensors
         imgs, targets, annotations = tuple(zip(*batch))
         imgs = [im.unsqueeze(0) for im in imgs]
         imgs = torch.cat(imgs, 0)
         targets = [t.type(torch.FloatTensor) for t in targets]
+        #targets = torch.cat(targets, 0)
         return imgs, targets, annotations
 
 
@@ -173,3 +195,4 @@ if __name__ == "__main__":
 
     label = "DHelmetP0NoHelmetP1HelmetP2NoHelmet"
     print(pos_encoding_from_label(label))
+
