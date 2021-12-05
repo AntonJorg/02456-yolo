@@ -53,14 +53,14 @@ class HELMETDataSet(Dataset):
     def __init__(self, root_dir, resize=None, split=None):
         # working directories
         self.root_dir = root_dir
-        self.video_dir = os.path.join(root_dir, "image")
+        self.video_dir = os.path.join(root_dir, "images")
         self.annotation_dir = os.path.join(root_dir, "annotation")
 
         if split is None:
             self.included_videos = None
         else:
             assert split in ["test", "training", "validation"], "Wrong split type!"
-            csv = pd.read_csv(os.path.join(self.root_dir, "data_split.csv"))
+            csv = pd.read_csv("./data_split.csv")#os.path.join(self.root_dir, "data_split.csv"))
             self.included_videos = list(csv["video_id"][csv["Set"] == split])
 
         # image paths and their corresponding video + frame ID
