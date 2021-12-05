@@ -134,7 +134,9 @@ dmypy.json
 # data folder
 data/
 
-# Weight folder
+# weight folder
 weights/
 
+# loss folder
+loss/
 output/
