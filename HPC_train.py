@@ -152,7 +152,7 @@ for epoch in range(1, N_EPOCHS + 1):
     }
 
     # Save metrics
-    with open('./loss/train_metrics.pickle', 'wb') as handle:
+    with open(f'./loss/train_metrics{epoch}.pickle', 'wb') as handle:
         pickle.dump(train_metric_dict, handle,
                     protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -215,7 +215,7 @@ for epoch in range(1, N_EPOCHS + 1):
     }
 
     # Save metrics
-    with open('./loss/val_metrics.pickle', 'wb') as handle:
+    with open(f'./loss/val_metrics{epoch}.pickle', 'wb') as handle:
         pickle.dump(val_metric_dict, handle,
                     protocol=pickle.HIGHEST_PROTOCOL)
 
