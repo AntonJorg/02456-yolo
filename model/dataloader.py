@@ -118,7 +118,7 @@ class HELMETDataSet(Dataset):
             y[:, 1:3] += y[:, 3:] / 2
         else:
             y = torch.tensor(y)
-
+        
         return self.transform(x), y, d
 
 
@@ -133,8 +133,7 @@ class HELMETDataLoader(DataLoader):
         imgs, targets, annotations = tuple(zip(*batch))
         imgs = [im.unsqueeze(0) for im in imgs]
         imgs = torch.cat(imgs, 0)
-        targets = [t for t in targets]
-        #targets = torch.cat(targets, 0)
+        targets = [t.type(torch.FloatTensor) for t in targets]
         return imgs, targets, annotations
 
 
