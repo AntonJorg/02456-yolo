@@ -1,9 +1,9 @@
-# 02456-yolo
+# 02456-yolo 😎
 ![Spicy example](example.gif)
 
 Repository for a PyTorch implementation of the YOLO model for the course 02456 Deep Learning at the Technical University of Denmark.
 
-## Usage
+## Usage 🚀
 To annotate a single image, run the `detect.py` script as follows:
 ```
 python detect.py filename.extension
@@ -21,15 +21,15 @@ For more help, see
 python detect.py -h
 ```
 
-## Architecture
+## Architecture 🧞
 
 
-## Data
+## Data 💻
 
 HELMET dataset: https://osf.io/4pwj8/
 
 
-## Authors:
+## Authors 🤓
 
 - Alma Fazlagic
 - Anton Thestrup Jørgensen
