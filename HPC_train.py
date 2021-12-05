@@ -101,9 +101,6 @@ for epoch in range(1, N_EPOCHS + 1):
         if sum([len(x) for x in targets]) < 1:  # if no targets continue
             continue
 
-        # To correct type.
-        targets = list(map(lambda x: x.type(torch.FloatTensor), targets))
-
         optimizer.zero_grad()  # Zero gradients
         loss = model(imgs.to(device), targets, requestPrecision=True)
         try:
@@ -152,7 +149,7 @@ for epoch in range(1, N_EPOCHS + 1):
     }
 
     # Save metrics
-    with open(f'./loss/train_metrics{epoch}.pickle', 'wb') as handle:
+    with open('./loss/train_metrics.pickle', 'wb') as handle:
         pickle.dump(train_metric_dict, handle,
                     protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -170,8 +167,6 @@ for epoch in range(1, N_EPOCHS + 1):
     rloss = defaultdict(float)  # running loss
     metrics = torch.zeros(4, num_classes)
     for imgs, targets, annotations in dataloader_val:
-        # To correct type.
-        targets = list(map(lambda x: x.type(torch.FloatTensor), targets))
 
         loss = model(imgs.to(device), targets, requestPrecision=True)
 
@@ -215,7 +210,7 @@ for epoch in range(1, N_EPOCHS + 1):
     }
 
     # Save metrics
-    with open(f'./loss/val_metrics{epoch}.pickle', 'wb') as handle:
+    with open('./loss/val_metrics.pickle', 'wb') as handle:
         pickle.dump(val_metric_dict, handle,
                     protocol=pickle.HIGHEST_PROTOCOL)
 

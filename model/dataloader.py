@@ -154,7 +154,7 @@ class HELMETDataLoader(DataLoader):
         imgs, targets, annotations = tuple(zip(*batch))
         imgs = [im.unsqueeze(0) for im in imgs]
         imgs = torch.cat(imgs, 0)
-        targets = [t for t in targets]
+        targets = [t.type(torch.FloatTensor) for t in targets]
         #targets = torch.cat(targets, 0)
         return imgs, targets, annotations
 
@@ -195,3 +195,4 @@ if __name__ == "__main__":
 
     label = "DHelmetP0NoHelmetP1HelmetP2NoHelmet"
     print(pos_encoding_from_label(label))
+

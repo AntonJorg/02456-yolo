@@ -1,9 +1,10 @@
 import argparse
 import os
 import imageio
-from tqdm import tqdm
-
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+from pygifsicle import optimize
+
 from model.dataloader import HELMETDataSet, class_dict
 from model.dataloader import class_dict
 from model.models import Darknet, load_weights, load_darknet_weights
@@ -19,8 +20,8 @@ parser.add_argument('-d', '--display', action="store_true", help="whether to dis
 parser.add_argument('--nocuda', action="store_true", help="disable CUDA")
 parser.add_argument('--dir', action="store_true", help="interpret filename as a directory containing the images")
 parser.add_argument('--savedir', help="directory to save output to")
-parser.add_argument('--gif', action="store_true", help="compile a gif of the processed images")
-
+parser.add_argument('--gif', action="store_true", help="compile a gif of the processed images.\n"
+                                                       "requires gifsicle to be installed")
 
 args = parser.parse_args()
 
@@ -77,12 +78,14 @@ for i, im in enumerate(pbar):
         if len(pred) > 0:
             detections = non_max_suppression(pred.unsqueeze(0), opt['conf_thres'], opt['nms_thres'])
             output.extend(detections)
+        else:
+            output.append(None)
 
 saved_images = []
 
 cmap = plt.cm.get_cmap("hsv", len(class_dict))
 
-pbar = tqdm(zip(no_resize, output), desc="Saving output", total=len(dataset))
+pbar = tqdm(zip(no_resize, output), desc="Saving output    ", total=len(dataset))
 for i, (img, detection) in enumerate(pbar):
     pbar.set_postfix({"current img": filenames[i]})
 
@@ -133,8 +136,8 @@ for i, (img, detection) in enumerate(pbar):
             y1 = (y1 / img_size * img.shape[1]).round().item()
             x1 = (x1 / img_size * img.shape[2]).round().item()
 
-            label = list(class_dict.keys())[int(cls_pred/len(class_dict))]
-            col = cmap(cls_pred)
+            label = list(class_dict.keys())[int(cls_pred)]
+            col = cmap(int(cls_pred))
             rect = plt.Rectangle((x1, y1), box_w, box_h, fc="none", ec=col)
             ax.add_patch(rect)
             ax.text(x1, y1, label, fontsize=10, bbox={'facecolor': col, 'pad': 2})
@@ -146,7 +149,7 @@ if args.gif:
     images = []
 
     saved_images.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
-    pbar = tqdm(saved_images, desc="Compiling GIF")
+    pbar = tqdm(saved_images, desc="Compiling GIF    ")
     for filename in pbar:
         pbar.set_postfix({"current img": filename})
         images.append(imageio.imread(filename))
@@ -156,6 +159,9 @@ if args.gif:
     else:
         save_path = os.path.join(os.path.split(saved_images[0])[0], "output.gif")
 
+    print("Saving GIF (might take a minute).")
     imageio.mimsave(save_path, images)
+    print("Compressing GIF (might take a few seconds).")
+    optimize(save_path)
 
 print("Process finished!")
