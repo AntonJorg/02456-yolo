@@ -89,11 +89,16 @@ pbar = tqdm(zip(no_resize, output), desc="Saving output    ", total=len(dataset)
 for i, (img, detection) in enumerate(pbar):
     pbar.set_postfix({"current img": filenames[i]})
 
+    if args.suffix:
+        suffix = args.suffix
+    else:
+        suffix = "annotated"
+
     if args.savedir:
-        file = os.path.split(filenames[i])[-1].split(".")[0] + "_annotated.png"
+        file = os.path.split(filenames[i])[-1].split(".")[0] + f"_{suffix}.png"
         save_path = os.path.join(args.savedir, file)
     else:
-        save_path = filenames[i].split(".")[0] + "_annotated.png"
+        save_path = filenames[i].split(".")[0] + f"_{suffix}.png"
 
     saved_images.append(save_path)
 
