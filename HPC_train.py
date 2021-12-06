@@ -57,7 +57,7 @@ for i, (name, p) in enumerate(model.named_parameters()):
     # print(i, p.shape[0], name)
     # if p.shape[0] != 650:  # not YOLO layer
     #    p.requires_grad = False
-    if i > CUTOFF:
+    if i < CUTOFF:
         p.requires_grad = False
 
 
@@ -98,8 +98,8 @@ for epoch in range(1, N_EPOCHS + 1):
     rloss = defaultdict(float)  # running loss
     metrics = torch.zeros(4, num_classes)
     for imgs, targets, annotations in dataloader_train:
-        if sum([len(x) for x in targets]) < 1:  # if no targets continue
-            continue
+        # if sum([len(x) for x in targets]) < 1:  # if no targets continue
+        #    continue
 
         optimizer.zero_grad()  # Zero gradients
         loss = model(imgs.to(device), targets, requestPrecision=True)
