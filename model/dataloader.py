@@ -142,7 +142,7 @@ class HELMETDataSet(Dataset):
 
 class HELMETDataLoader(DataLoader):
     def __init__(self, root_dir="", batch_size=4, shuffle=True, resize=None, split=None, flip=False, filenames=None):
-        dataset = HELMETDataSet(root_dir, resize=resize, split=split, filenames=filenames, flip=flip)
+        dataset = HELMETDataSet(root_dir, resize=resize, split=split, flip=flip, filenames=filenames)
         if filenames is not None:
             batch_size = len(filenames)
         super().__init__(dataset, shuffle=shuffle, batch_size=batch_size, collate_fn=self.custom_collate_fn)
@@ -169,7 +169,7 @@ def jointflip(img, bb):
 
     if flip:
         img = transforms.RandomHorizontalFlip(p=1).forward(img)
-        bb[1:3] = 1 - bb[1:3]
+        bb[:, 1] = 1 - bb[:, 1]
     return img, bb
 
 def dict_from_bounding_box(bb):
