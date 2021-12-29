@@ -27,7 +27,7 @@ args = parser.parse_args()
 
 cfg_path = './cfg/yolov3_36.cfg'
 conv74_weights_path = './weights/darknet53.conv.74'
-trained_weights_path = './weights/416e17.pt'
+trained_weights_path = './weights/416e33.pt'
 
 
 def get_darknet(img_size, cfg=cfg_path):
@@ -160,9 +160,9 @@ if args.gif:
         images.append(imageio.imread(filename))
 
     if args.savedir:
-        save_path = os.path.join(args.savedir, "output.gif")
+        save_path = os.path.join(args.savedir, "example.gif")
     else:
-        save_path = os.path.join(os.path.split(saved_images[0])[0], "output.gif")
+        save_path = os.path.join(os.path.split(saved_images[0])[0], "example.gif")
 
     print("Saving GIF (might take a minute).")
     imageio.mimsave(save_path, images)
