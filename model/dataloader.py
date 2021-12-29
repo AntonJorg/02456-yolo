@@ -169,7 +169,7 @@ def jointflip(img, bb):
 
     if flip:
         img = transforms.RandomHorizontalFlip(p=1).forward(img)
-        if torch.shape[0]:
+        if bb.shape[0]:
             bb[..., 1] = 1 - bb[..., 1]
     return img, bb
 
