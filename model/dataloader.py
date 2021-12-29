@@ -141,8 +141,8 @@ class HELMETDataSet(Dataset):
 
 
 class HELMETDataLoader(DataLoader):
-    def __init__(self, root_dir="", batch_size=4, shuffle=True, resize=None, split=None, filenames=None):
-        dataset = HELMETDataSet(root_dir, resize=resize, split=split, filenames=filenames)
+    def __init__(self, root_dir="", batch_size=4, shuffle=True, resize=None, split=None, flip=False, filenames=None):
+        dataset = HELMETDataSet(root_dir, resize=resize, split=split, filenames=filenames, flip=flip)
         if filenames is not None:
             batch_size = len(filenames)
         super().__init__(dataset, shuffle=shuffle, batch_size=batch_size, collate_fn=self.custom_collate_fn)
