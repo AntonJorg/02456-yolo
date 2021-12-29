@@ -50,13 +50,14 @@ class_dict = {
 
 
 class HELMETDataSet(Dataset):
-    def __init__(self, root_dir="", resize=None, split=None, filenames=None):
+    def __init__(self, root_dir="", resize=None, split=None, filenames=None, flip=True):
         # working directories
         self.root_dir = root_dir
         self.video_dir = os.path.join(root_dir, "images")
         self.annotation_dir = os.path.join(root_dir, "annotation")
         self.resize = resize
         self.split = split
+        self.flip = flip
 
         self.images_paths = []
         self.images_vid_names = []
@@ -102,6 +103,9 @@ class HELMETDataSet(Dataset):
             y[:, 1:3] += y[:, 3:] / 2
         else:
             y = torch.tensor(y)
+        
+        if self.flip:
+            x, y = jointflip(x, y)
 
         return self.transform(x), y, d
 
@@ -158,6 +162,15 @@ class HELMETDataLoader(DataLoader):
         #targets = torch.cat(targets, 0)
         return imgs, targets, annotations
 
+
+def jointflip(img, bb):
+    # Flip a coin to determine if flip or no flip
+    flip = np.random.randint(2)
+
+    if flip:
+        img = transforms.RandomHorizontalFlip(p=1).forward(img)
+        bb[1:3] = 1 - bb[1:3]
+    return img, bb
 
 def dict_from_bounding_box(bb):
     d = {"track_id": bb[0], "frame_id": bb[1], "dim": bb[2:6].astype(int), "class": bb[6]}
