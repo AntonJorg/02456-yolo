@@ -169,7 +169,8 @@ def jointflip(img, bb):
 
     if flip:
         img = transforms.RandomHorizontalFlip(p=1).forward(img)
-        bb[:, 1] = 1 - bb[:, 1]
+        if torch.shape[0]:
+            bb[..., 1] = 1 - bb[..., 1]
     return img, bb
 
 def dict_from_bounding_box(bb):
