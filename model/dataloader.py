@@ -50,7 +50,7 @@ class_dict = {
 
 
 class HELMETDataSet(Dataset):
-    def __init__(self, root_dir="", resize=None, split=None, filenames=None, flip=True):
+    def __init__(self, root_dir="", resize=None, split=None, filenames=None, flip=False):
         # working directories
         self.root_dir = root_dir
         self.video_dir = os.path.join(root_dir, "images")
